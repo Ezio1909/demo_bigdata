@@ -18,6 +18,43 @@ The system consists of several interconnected components:
 - **Visualization**: Real-time web dashboard with charts and event monitoring
 - **Data Lifecycle**: Automatic cleanup of data older than 1 hour
 
+## Requirements and One-Line Start
+
+- Docker & Docker Compose
+- 8GB+ RAM recommended
+- 10GB+ free disk space
+
+Start everything and begin the data flow (producer + streaming):
+
+```bash
+export GITHUB_TOKEN=your_token_here && cd /Users/nampham/demo_bigdata && ./scripts/setup-microservices.sh && curl -sS -X POST http://localhost:8001/start && curl -sS -X POST http://localhost:8002/start
+```
+
+### Logs & Debugging (quick references)
+
+```bash
+# All services (tail)
+docker-compose -f docker-compose-microservices.yml logs -f --tail=100
+
+# Producer / Streaming / Query API
+docker-compose -f docker-compose-microservices.yml logs -f --tail=200 github-producer-service
+docker-compose -f docker-compose-microservices.yml logs -f --tail=200 spark-streaming-service
+docker-compose -f docker-compose-microservices.yml logs -f --tail=200 data-query-service
+
+# Dashboard / Registry / Infra
+docker-compose -f docker-compose-microservices.yml logs -f dashboard-service service-registry kafka zookeeper minio kafka-ui
+
+# Health checks
+curl -s http://localhost:8001/health; echo
+curl -s http://localhost:8002/health; echo
+curl -s http://localhost:8003/health; echo
+
+# Exec into a container
+docker exec -it spark-streaming-service bash
+```
+
+Note: If you’re behind a corporate proxy and the producer shows SSL errors to `api.github.com`, install your org CA in the producer container or set `REQUESTS_CA_BUNDLE` to a CA bundle that includes it.
+
 ## 🚀 Quick Start
 
 ### Prerequisites
