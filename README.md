@@ -27,7 +27,7 @@ The system consists of several interconnected components:
 Start everything and begin the data flow (producer + streaming):
 
 ```bash
-export GITHUB_TOKEN=your_token_here && cd /Users/nampham/demo_bigdata && ./scripts/setup-microservices.sh && curl -sS -X POST http://localhost:8001/start && curl -sS -X POST http://localhost:8002/start
+export GITHUB_TOKEN=your_token_here && ./scripts/setup-microservices.sh && curl -sS -X POST http://localhost:8001/start && curl -sS -X POST http://localhost:8002/start
 ```
 
 ### Logs & Debugging (quick references)
@@ -63,10 +63,10 @@ Note: If you’re behind a corporate proxy and the producer shows SSL errors to 
 - 8GB+ RAM recommended
 - 10GB+ free disk space
 
-### One-Command Setup
+### One-Command Setup (Microservices)
 
 ```bash
-./scripts/setup.sh
+./scripts/setup-microservices.sh
 ```
 
 This script will:
@@ -77,19 +77,21 @@ This script will:
 - Launch all application services
 - Display service URLs and credentials
 
-### Manual Setup
+### Manual Setup (Microservices)
 
 If you prefer manual setup:
 
 ```bash
 # 1. Start infrastructure
-docker-compose up -d zookeeper kafka minio spark-master spark-worker
+docker-compose -f docker-compose-microservices.yml up -d zookeeper kafka minio minio-init
 
 # 2. Create Kafka topic
 ./kafka/create-topic.sh
 
 # 3. Start application services
-docker-compose up -d github-producer spark-consumer api dashboard
+docker-compose -f docker-compose-microservices.yml up -d \
+  github-producer-service spark-streaming-service data-query-service \
+  dashboard-service service-registry kafka-ui
 ```
 
 ## 📊 Service URLs
@@ -99,11 +101,11 @@ Once running, access these services:
 | Service | URL | Description |
 |---------|-----|-------------|
 | 📊 **Dashboard** | http://localhost:8080 | Real-time monitoring interface |
-| 🔌 **REST API** | http://localhost:8000 | Data access API |
-| 📚 **API Docs** | http://localhost:8000/docs | Interactive API documentation |
+| 🔌 **Data Query API** | http://localhost:8003 | Data access API (microservices) |
+| 📚 **API Docs** | http://localhost:8003/docs | Interactive API documentation |
+| 🧭 **Service Registry** | http://localhost:8000 | Registry and health overview |
 | ⚡ **Kafka UI** | http://localhost:8090 | Kafka cluster monitoring |
 | 🗄️ **MinIO Console** | http://localhost:9001 | Object storage management |
-| ⚙️ **Spark UI** | http://localhost:8080 | Spark cluster monitoring |
 
 **Default Credentials:**
 - MinIO: `minioadmin` / `minioadmin123`
@@ -162,7 +164,7 @@ To avoid rate limiting, add your GitHub personal access token:
    ```
    GITHUB_TOKEN=your_token_here
    ```
-3. Restart the producer: `docker-compose restart github-producer`
+3. Restart the producer: `docker-compose -f docker-compose-microservices.yml restart github-producer-service`
 
 ### Environment Variables
 
@@ -190,37 +192,38 @@ spark-worker:
 ### View Logs
 
 ```bash
-# All services
-./scripts/logs.sh
+# All services (microservices compose)
+docker-compose -f docker-compose-microservices.yml logs -f
 
 # Specific service
-./scripts/logs.sh github-producer
+docker-compose -f docker-compose-microservices.yml logs -f --tail=100 data-query-service
 
-# Last 100 lines
-./scripts/logs.sh api --tail 100
+# Producer / Streaming
+docker-compose -f docker-compose-microservices.yml logs -f --tail=200 github-producer-service
+docker-compose -f docker-compose-microservices.yml logs -f --tail=200 spark-streaming-service
 ```
 
-### Service Management
+### Service Management (Microservices)
 
 ```bash
 # Check status
-docker-compose ps
+docker-compose -f docker-compose-microservices.yml ps
 
 # Restart service
-docker-compose restart [service-name]
+docker-compose -f docker-compose-microservices.yml restart [service-name]
 
-# Scale service
-docker-compose up -d --scale spark-worker=2
+# Scale a service (example)
+docker-compose -f docker-compose-microservices.yml up -d --scale spark-streaming-service=2
 ```
 
 ### Health Checks
 
 ```bash
-# API health
-curl http://localhost:8000/health
+# Data Query API health (microservices)
+curl http://localhost:8003/health
 
-# Service stats
-curl http://localhost:8000/stats
+# Data Query API stats
+curl http://localhost:8003/stats
 ```
 
 ## 🔍 Data Schema
@@ -269,18 +272,18 @@ Events are categorized for easier analysis:
 docker system df
 docker system prune -f
 
-# Restart with clean state
-./scripts/stop.sh --volumes
-./scripts/setup.sh
+# Restart with clean state (microservices)
+docker-compose -f docker-compose-microservices.yml down -v
+./scripts/setup-microservices.sh
 ```
 
 **No data in dashboard:**
-- Check if GitHub producer is running: `docker logs github-events-producer`
+- Check if GitHub producer is running: `docker logs github-producer-service`
 - Verify Kafka topic exists: `docker exec github-events-kafka kafka-topics --list --bootstrap-server localhost:9092`
-- Check Spark consumer logs: `docker logs github-events-spark-consumer`
+- Check streaming service logs: `docker logs spark-streaming-service`
 
 **API errors:**
-- Ensure Spark master is running: `curl http://localhost:8080`
+- Ensure Data Query API is healthy: `curl http://localhost:8003/health`
 - Check MinIO accessibility: `curl http://localhost:9000/minio/health/live`
 - Verify Iceberg table exists in MinIO console
 
@@ -306,11 +309,11 @@ docker system prune -f
 ## 🛑 Shutdown
 
 ```bash
-# Stop all services
-./scripts/stop.sh
+# Stop all services (microservices)
+docker-compose -f docker-compose-microservices.yml down
 
 # Stop and remove all data
-./scripts/stop.sh --volumes
+docker-compose -f docker-compose-microservices.yml down -v
 ```
 
 ## 🔐 Security Notes
@@ -338,13 +341,13 @@ This is a development setup. For production:
 
 ```bash
 # Get recent events
-curl "http://localhost:8000/events?hours_back=1&page_size=10"
+curl "http://localhost:8003/events?hours_back=1&page_size=10"
 
 # Filter by event type
-curl "http://localhost:8000/events?event_type=PushEvent"
+curl "http://localhost:8003/events?event_type=PushEvent"
 
 # Get statistics
-curl "http://localhost:8000/stats?hours_back=6"
+curl "http://localhost:8003/stats?hours_back=6"
 ```
 
 ## 🤝 Contributing
@@ -352,7 +355,7 @@ curl "http://localhost:8000/stats?hours_back=6"
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Test with `./scripts/setup.sh`
+4. Test with `./scripts/setup-microservices.sh`
 5. Submit a pull request
 
 ## 📄 License

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Create Kafka topic for GitHub events
-docker exec kafka kafka-topics --create \
+# Create Kafka topic for GitHub events (microservices container name)
+docker exec github-events-kafka kafka-topics --create \
   --topic github-events \
   --bootstrap-server localhost:9092 \
   --partitions 3 \
@@ -11,7 +11,7 @@ docker exec kafka kafka-topics --create \
   --config cleanup.policy=delete
 
 # Verify topic creation
-docker exec kafka kafka-topics --describe \
+docker exec github-events-kafka kafka-topics --describe \
   --topic github-events \
   --bootstrap-server localhost:9092
 
