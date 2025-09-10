@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Events Monitor</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🚀 GitHub Events Monitor</h1>
+            <div class="header-controls">
+                <div class="time-range-selector">
+                    <label for="hoursBack">Time Range: Last 24 Hours</label>
+                    <select id="hoursBack" disabled>
+                        <option value="24" selected>Last 24 Hours</option>
+                    </select>
+                </div>
+                <div class="refresh-controls">
+                    <button id="refreshBtn" disabled>🔄 Auto (SSE)</button>
+                    <div class="auto-refresh">
+                        <label>
+                            <input type="checkbox" id="autoRefresh" disabled>
+                            Auto-refresh disabled (SSE)
+                        </label>
+                    </div>
+                </div>
+                <div class="status-indicator">
+                    <span id="connectionStatus" class="status-connected">●</span>
+                    <span id="lastUpdate">Never</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard -->
+        <main class="dashboard">
+            <!-- Overview Cards -->
+            <section class="overview-cards">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Total Events</h3>
+                        <span class="icon">📊</span>
+                    </div>
+                    <div class="card-value" id="totalEvents">-</div>
+                    <div class="card-subtitle">in last 24 hours</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Unique Repositories</h3>
+                        <span class="icon">📦</span>
+                    </div>
+                    <div class="card-value" id="uniqueRepos">-</div>
+                    <div class="card-subtitle">active repositories</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Unique Actors</h3>
+                        <span class="icon">👥</span>
+                    </div>
+                    <div class="card-value" id="uniqueActors">-</div>
+                    <div class="card-subtitle">active users</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Event Types</h3>
+                        <span class="icon">🏷️</span>
+                    </div>
+                    <div class="card-value" id="eventTypesCount">-</div>
+                    <div class="card-subtitle">different event types</div>
+                </div>
+            </section>
+
+            <!-- Charts Section -->
+            <section class="charts-section">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>Events Over Time</h3>
+                        <div class="chart-controls">
+                            <button onclick="exportChart('timeSeriesChart')">📥 Export</button>
+                        </div>
+                    </div>
+                    <canvas id="timeSeriesChart"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>Event Types Distribution</h3>
+                        <div class="chart-controls">
+                            <button onclick="exportChart('eventTypesChart')">📥 Export</button>
+                        </div>
+                    </div>
+                    <canvas id="eventTypesChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Tables Section -->
+            <section class="tables-section">
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3>Top Repositories</h3>
+                        <div class="table-controls">
+                            <button onclick="exportTable('topReposTable')">📥 Export CSV</button>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table id="topReposTable" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Repository</th>
+                                    <th>Events</th>
+                                    <th>Unique Actors</th>
+                                    <th>Event Types</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="4" class="no-data">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3>Top Actors</h3>
+                        <div class="table-controls">
+                            <button onclick="exportTable('topActorsTable')">📥 Export CSV</button>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table id="topActorsTable" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Actor</th>
+                                    <th>Events</th>
+                                    <th>Repositories</th>
+                                    <th>Event Types</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="4" class="no-data">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recent Events Section -->
+            <section class="recent-events-section">
+                <div class="events-container">
+                    <div class="events-header">
+                        <h3>Recent Events</h3>
+                        <div class="events-controls">
+                            <div class="filter-controls">
+                                <select id="eventTypeFilter" onchange="applyFilters()">
+                                    <option value="">All Event Types</option>
+                                </select>
+                                <select id="eventCategoryFilter" onchange="applyFilters()">
+                                    <option value="">All Categories</option>
+                                </select>
+                            </div>
+                            <button onclick="loadMoreEvents()">Load More</button>
+                        </div>
+                    </div>
+                    <div class="events-list" id="eventsList">
+                        <div class="loading">Loading recent events...</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Error Modal -->
+        <div id="errorModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>❌ Error</h3>
+                    <button class="close-btn" onclick="closeErrorModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p id="errorMessage">An error occurred</p>
+                </div>
+                <div class="modal-footer">
+                    <button onclick="closeErrorModal()">Close</button>
+                    <button onclick="refreshData()">Retry</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="api.js"></script>
+    <script src="charts.js"></script>
+    <script src="tables.js"></script>
+    <script src="events.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

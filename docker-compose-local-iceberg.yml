@@ -1,0 +1,209 @@
+version: '3.8'
+
+services:
+  # Zookeeper - Required by Kafka
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    hostname: zookeeper
+    container_name: github-events-zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-logs:/var/lib/zookeeper/log
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - github-events-network
+
+  # Kafka Broker
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    hostname: kafka
+    container_name: github-events-kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+      - "9101:9101"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+      # Log retention settings - keep data for 2 hours max
+      KAFKA_LOG_RETENTION_HOURS: 2
+      KAFKA_LOG_RETENTION_BYTES: 1073741824  # 1GB
+      KAFKA_LOG_SEGMENT_BYTES: 67108864      # 64MB
+      KAFKA_LOG_CLEANUP_POLICY: delete
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - github-events-network
+
+  # Kafka UI for monitoring (optional)
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: github-events-kafka-ui
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8090:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: github-events
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    restart: unless-stopped
+    networks:
+      - github-events-network
+
+  # Spark Master
+  spark-master:
+    image: bitnami/spark:3.4.1
+    container_name: github-events-spark-master
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    ports:
+      - "8080:8080"  # Spark Master Web UI
+      - "7077:7077"  # Spark Master Port
+    volumes:
+      - spark-logs:/opt/bitnami/spark/logs
+      - ./spark:/opt/spark/work-dir
+      - ./iceberg:/opt/iceberg  # Local Iceberg storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - github-events-network
+
+  # Spark Worker
+  spark-worker:
+    image: bitnami/spark:3.4.1
+    container_name: github-events-spark-worker
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=2
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    volumes:
+      - spark-logs:/opt/bitnami/spark/logs
+      - ./spark:/opt/spark/work-dir
+      - ./iceberg:/opt/iceberg  # Local Iceberg storage
+    networks:
+      - github-events-network
+
+  # GitHub Event Producer
+  github-producer:
+    build:
+      context: ./producer
+      dockerfile: Dockerfile
+    container_name: github-events-producer
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - KAFKA_TOPIC=github-events
+      - FETCH_INTERVAL_SECONDS=30
+      - MAX_EVENTS_PER_FETCH=100
+    volumes:
+      - ./producer:/app
+    restart: unless-stopped
+    networks:
+      - github-events-network
+
+  # Spark Consumer (Kafka to LOCAL Iceberg)
+  spark-consumer:
+    build:
+      context: ./spark
+      dockerfile: Dockerfile
+    container_name: github-events-spark-consumer
+    depends_on:
+      kafka:
+        condition: service_healthy
+      spark-master:
+        condition: service_healthy
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - KAFKA_TOPIC=github-events
+      - SPARK_MASTER=spark://spark-master:7077
+      # LOCAL FILESYSTEM ICEBERG (not S3/MinIO)
+      - ICEBERG_WAREHOUSE_PATH=file:///opt/iceberg/warehouse
+      - CHECKPOINT_LOCATION=file:///opt/iceberg/checkpoints
+      - USE_LOCAL_FILESYSTEM=true
+    volumes:
+      - ./spark:/app
+      - ./iceberg:/opt/iceberg  # This will now have your data!
+    restart: unless-stopped
+    networks:
+      - github-events-network
+
+  # REST API (optional - for querying data)
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: github-events-api
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - SPARK_MASTER=spark://spark-master:7077
+      # LOCAL FILESYSTEM ICEBERG
+      - ICEBERG_WAREHOUSE_PATH=file:///opt/iceberg/warehouse
+      - USE_LOCAL_FILESYSTEM=true
+    volumes:
+      - ./api:/app
+      - ./iceberg:/opt/iceberg  # Access to local Iceberg data
+    restart: unless-stopped
+    networks:
+      - github-events-network
+
+volumes:
+  zookeeper-data:
+    driver: local
+  kafka-data:
+    driver: local
+  spark-logs:
+    driver: local
+
+networks:
+  github-events-network:
+    driver: bridge
+    name: github-events-network
