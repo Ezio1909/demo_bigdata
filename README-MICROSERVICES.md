@@ -28,7 +28,7 @@ A **containerized microservices architecture** where each component is isolated,
 
 ```bash
 # One command setup
-./scripts/setup-microservices.sh
+./scripts/setup-microservices.sh && curl -sS -X POST http://localhost:8001/start && curl -sS -X POST http://localhost:8002/start
 ```
 
 ## 📊 Service Endpoints
