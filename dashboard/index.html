@@ -15,20 +15,8 @@
         <header class="header">
             <h1>🚀 GitHub Events Monitor</h1>
             <div class="header-controls">
-                <div class="time-range-selector">
-                    <label for="hoursBack">Time Range: Last 24 Hours</label>
-                    <select id="hoursBack" disabled>
-                        <option value="24" selected>Last 24 Hours</option>
-                    </select>
-                </div>
                 <div class="refresh-controls">
                     <button id="refreshBtn" disabled>🔄 Auto (SSE)</button>
-                    <div class="auto-refresh">
-                        <label>
-                            <input type="checkbox" id="autoRefresh" disabled>
-                            Auto-refresh disabled (SSE)
-                        </label>
-                    </div>
                 </div>
                 <div class="status-indicator">
                     <span id="connectionStatus" class="status-connected">●</span>

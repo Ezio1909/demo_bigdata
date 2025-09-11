@@ -44,8 +44,8 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_JMX_PORT: 9101
       KAFKA_JMX_HOSTNAME: localhost
-      # Log retention settings - keep data for 2 hours max
-      KAFKA_LOG_RETENTION_HOURS: 2
+      # Log retention settings - keep data for 3 hours max
+      KAFKA_LOG_RETENTION_HOURS: 3
       KAFKA_LOG_RETENTION_BYTES: 1073741824  # 1GB
       KAFKA_LOG_SEGMENT_BYTES: 67108864      # 64MB
       KAFKA_LOG_CLEANUP_POLICY: delete
@@ -137,6 +137,7 @@ services:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - KAFKA_TOPIC=github-events
       - FETCH_INTERVAL_SECONDS=30
+      - FETCH_INTERVAL_SECONDS=3
       - MAX_EVENTS_PER_FETCH=100
     volumes:
       - ./producer:/app

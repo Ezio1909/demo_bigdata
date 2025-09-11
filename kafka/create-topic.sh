@@ -6,7 +6,7 @@ docker exec github-events-kafka kafka-topics --create \
   --bootstrap-server localhost:9092 \
   --partitions 3 \
   --replication-factor 1 \
-  --config retention.ms=7200000 \
+  --config retention.ms=10800000 \
   --config segment.ms=3600000 \
   --config cleanup.policy=delete
 

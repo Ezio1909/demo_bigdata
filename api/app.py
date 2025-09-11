@@ -206,7 +206,7 @@ async def stream_metrics(service: GitHubEventsDataService = Depends(get_data_ser
             except Exception as e:
                 logger.error(f"SSE stream error: {e}")
                 yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
-            await asyncio.sleep(15)
+            await asyncio.sleep(0.5)
 
     headers = {
         "Cache-Control": "no-cache",

@@ -15,7 +15,7 @@ class Config:
     KAFKA_TOPIC = os.getenv('KAFKA_TOPIC', 'github-events')
     
     # Producer Configuration
-    FETCH_INTERVAL_SECONDS = int(os.getenv('FETCH_INTERVAL_SECONDS', '30'))
+    FETCH_INTERVAL_SECONDS = int(os.getenv('FETCH_INTERVAL_SECONDS', '3'))
     MAX_EVENTS_PER_FETCH = int(os.getenv('MAX_EVENTS_PER_FETCH', '100'))
     
     # Rate limiting to avoid hitting GitHub API limits
@@ -27,7 +27,7 @@ class Config:
         if not cls.GITHUB_TOKEN:
             print("Warning: No GitHub token provided. Rate limiting will be more restrictive.")
         
-        if cls.FETCH_INTERVAL_SECONDS < 10:
-            raise ValueError("FETCH_INTERVAL_SECONDS must be at least 10 seconds to avoid rate limiting")
+        if cls.FETCH_INTERVAL_SECONDS < 1:
+            raise ValueError("FETCH_INTERVAL_SECONDS must be at least 1 second")
         
         return True

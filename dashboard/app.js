@@ -16,14 +16,8 @@ class GitHubEventsDashboard {
         try {
             console.log('Initializing GitHub Events Dashboard...');
             
-            // Lock UI to 24h
-            const hoursBackSelect = document.getElementById('hoursBack');
-            if (hoursBackSelect) {
-                hoursBackSelect.value = '24';
-                hoursBackSelect.disabled = true;
-                const label = hoursBackSelect.parentElement?.querySelector('label');
-                if (label) label.textContent = 'Time Range: Last 24 Hours';
-            }
+            // Display-only: Time Range fixed to Last 24 Hours (control removed in HTML)
+            this.currentTimeRange = 24;
             const autoRefreshCheckbox = document.getElementById('autoRefresh');
             if (autoRefreshCheckbox) {
                 autoRefreshCheckbox.checked = false;

@@ -50,7 +50,7 @@ class GitHubEventsDataService:
             logger.error(f"Failed to initialize data service: {e}")
             return False
 
-    def _start_cache_updater(self, refresh_seconds: int = 30):
+    def _start_cache_updater(self, refresh_seconds: int = 1):
         if self._cache_thread and self._cache_thread.is_alive():
             return
         def _worker():

@@ -76,7 +76,7 @@ KAFKA_BOOTSTRAP_SERVERS=kafka:29092
 KAFKA_TOPIC=github-events
 
 # Producer Configuration
-FETCH_INTERVAL_SECONDS=30
+FETCH_INTERVAL_SECONDS=3
 MAX_EVENTS_PER_FETCH=100
 PRODUCER_API_PORT=8001
 EOF
@@ -181,7 +181,7 @@ create_kafka_topic() {
         --bootstrap-server localhost:9092 \
         --partitions 3 \
         --replication-factor 1 \
-        --config retention.ms=7200000 \
+        --config retention.ms=10800000 \
         --config segment.ms=3600000 \
         --config cleanup.policy=delete \
         --if-not-exists

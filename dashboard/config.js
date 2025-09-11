@@ -5,7 +5,7 @@ const CONFIG = {
     API_BASE_URL: 'http://localhost:8003',
     
     // Refresh Configuration
-    AUTO_REFRESH_INTERVAL: 30000, // 30 seconds
+    AUTO_REFRESH_INTERVAL: 1000, // 10 seconds
     
     // Chart Configuration
     CHART_COLORS: {
@@ -63,7 +63,7 @@ const CONFIG = {
     
     // Error Handling
     MAX_RETRIES: 3,
-    RETRY_DELAY: 2000, // 2 seconds
+    RETRY_DELAY: 1000, // 1 second
     
     // Data Formatting
     DATE_FORMAT: 'MMM dd, yyyy HH:mm:ss',
@@ -71,7 +71,7 @@ const CONFIG = {
     
     // Performance
     DEBOUNCE_DELAY: 300, // milliseconds
-    CACHE_DURATION: 30000, // 30 seconds
+    CACHE_DURATION: 10000, // 10 seconds
     
     // Feature Flags
     FEATURES: {

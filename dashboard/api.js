@@ -34,9 +34,7 @@ class GitHubEventsAPI {
             // Retry logic for network errors
             if (this.retryCount < CONFIG.MAX_RETRIES && this.isNetworkError(error)) {
                 this.retryCount++;
-                console.log(`Retrying request (${this.retryCount}/${CONFIG.MAX_RETRIES})...`);
-                
-                await this.delay(CONFIG.RETRY_DELAY * this.retryCount);
+                await this.delay(Math.max(500, CONFIG.RETRY_DELAY / 2));
                 return this.request(endpoint, options);
             }
             
