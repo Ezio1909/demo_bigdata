@@ -9,8 +9,8 @@ import time
 import signal
 import sys
 from datetime import datetime
-from github_client import GitHubEventsClient
-from kafka_producer import GitHubEventsKafkaProducer
+from github.client import GitHubEventsClient
+from kafka_io.producer import GitHubEventsKafkaProducer
 from config import Config
 
 # Configure logging

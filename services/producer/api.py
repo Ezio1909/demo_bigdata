@@ -15,8 +15,8 @@ from pydantic import BaseModel
 import uvicorn
 
 # Import the producer components
-from github_client import GitHubEventsClient
-from kafka_producer import GitHubEventsKafkaProducer
+from github.client import GitHubEventsClient
+from kafka_io.producer import GitHubEventsKafkaProducer
 from config import Config
 
 # Configure logging
@@ -292,7 +292,7 @@ def main():
     logger.info("Starting GitHub Events Producer API Service")
     
     uvicorn.run(
-        "producer_api:app",
+        "api:app",
         host="0.0.0.0",
         port=8001,
         log_level="info"

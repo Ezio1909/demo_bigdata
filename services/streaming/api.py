@@ -682,7 +682,7 @@ def main():
     logger.info("Starting Spark Streaming Service API")
     
     uvicorn.run(
-        "streaming_api:app",
+        "api:app",
         host="0.0.0.0",
         port=8002,
         log_level="info"

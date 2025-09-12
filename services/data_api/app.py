@@ -4,6 +4,10 @@ GitHub Events REST API
 Provides REST endpoints for querying GitHub events from Iceberg tables
 """
 
+# Ensure common package is importable when mounted at /common
+import sys, os
+sys.path.extend([p for p in ('/common', os.environ.get('PYTHONPATH', '')) if p])
+
 import logging
 import sys
 from datetime import datetime

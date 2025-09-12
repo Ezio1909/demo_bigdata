@@ -1,34 +1,52 @@
 import os
-from dotenv import load_dotenv
+try:
+    from common.config import settings
+except Exception:
+    # Fallback: minimal in-module settings if common package not available
+    class _Fallback:
+        class api:
+            host = os.getenv('API_HOST', '0.0.0.0')
+            port = int(os.getenv('API_PORT', '8003'))
+            debug = os.getenv('API_DEBUG', 'false').lower() == 'true'
+        class iceberg:
+            catalog_name = os.getenv('ICEBERG_CATALOG_NAME', 'github_events')
+            warehouse_path = os.getenv('ICEBERG_WAREHOUSE_PATH', '/opt/iceberg/warehouse')
+            table_name = os.getenv('ICEBERG_TABLE_NAME') or f"{os.getenv('ICEBERG_CATALOG_NAME', 'github_events')}.github_events.events"
+        class spark:
+            master = os.getenv('SPARK_MASTER', 'local[*]')
+        class s3:
+            endpoint = os.getenv('S3_ENDPOINT', 'http://localhost:9000')
+            access_key = os.getenv('S3_ACCESS_KEY', 'minioadmin')
+            secret_key = os.getenv('S3_SECRET_KEY', 'minioadmin123')
+    settings = _Fallback()
 
-load_dotenv()
 
 class APIConfig:
-    """Configuration for the REST API service"""
-    
+    """Configuration for the REST API service (adapter to common settings)."""
+
     # API Configuration
-    HOST = os.getenv('API_HOST', '0.0.0.0')
-    PORT = int(os.getenv('API_PORT', '8000'))
-    DEBUG = os.getenv('API_DEBUG', 'false').lower() == 'true'
-    
+    HOST = settings.api.host
+    PORT = settings.api.port
+    DEBUG = settings.api.debug
+
     # Iceberg Configuration
-    ICEBERG_CATALOG_NAME = 'github_events'
-    ICEBERG_WAREHOUSE_PATH = os.getenv('ICEBERG_WAREHOUSE_PATH', '/opt/iceberg/warehouse')
-    ICEBERG_TABLE_NAME = f'{ICEBERG_CATALOG_NAME}.github_events.events'
-    
+    ICEBERG_CATALOG_NAME = settings.iceberg.catalog_name
+    ICEBERG_WAREHOUSE_PATH = settings.iceberg.warehouse_path
+    ICEBERG_TABLE_NAME = settings.iceberg.table_name
+
     # Spark Configuration
-    SPARK_MASTER = os.getenv('SPARK_MASTER', 'local[*]')
-    
+    SPARK_MASTER = settings.spark.master
+
     # MinIO/S3 Configuration
-    S3_ENDPOINT = os.getenv('S3_ENDPOINT', 'http://localhost:9000')
-    S3_ACCESS_KEY = os.getenv('S3_ACCESS_KEY', 'minioadmin')
-    S3_SECRET_KEY = os.getenv('S3_SECRET_KEY', 'minioadmin123')
-    
+    S3_ENDPOINT = settings.s3.endpoint
+    S3_ACCESS_KEY = settings.s3.access_key
+    S3_SECRET_KEY = settings.s3.secret_key
+
     # Query Configuration
     MAX_RESULTS_LIMIT = int(os.getenv('MAX_RESULTS_LIMIT', '1000'))
     DEFAULT_RESULTS_LIMIT = int(os.getenv('DEFAULT_RESULTS_LIMIT', '100'))
     CACHE_TTL_SECONDS = int(os.getenv('CACHE_TTL_SECONDS', '30'))
-    
+
     @classmethod
     def get_spark_conf(cls):
         """Get Spark configuration for API service"""
