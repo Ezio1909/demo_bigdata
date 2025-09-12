@@ -74,7 +74,8 @@ class GitHubEventsDataService:
         """Get events with filtering and pagination"""
         try:
             # Serve from in-memory cache to avoid live Spark calls during requests
-            hours = params.hours_back or 1
+            # Use 24h cache since that's what we populate
+            hours = 24
             with self._cache_lock:
                 cached = list(self.recent_events_cache.get(hours, []))
             # Apply filters in Python
