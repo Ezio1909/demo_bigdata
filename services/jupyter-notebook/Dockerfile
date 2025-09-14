@@ -23,5 +23,6 @@ RUN mkdir -p /opt/ivy
 EXPOSE 8888
 
 # Default command runs Jupyter Lab with no token (local dev only)
-CMD ["bash", "-lc", "jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --ServerApp.token='' --NotebookApp.token='' --ServerApp.password='' --NotebookApp.password='' --LabApp.allow_origin='*' --LabApp.base_url='/'"]
+# Use ServerApp.* flags and allow root inside container
+CMD ["bash", "-lc", "jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --ServerApp.token='' --ServerApp.password='' --ServerApp.allow_origin='*' --ServerApp.base_url='/'"]
 
