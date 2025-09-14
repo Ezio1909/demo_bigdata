@@ -1,0 +1,6 @@
+pyspark==3.4.1
+jupyterlab==4.1.6
+ipykernel==6.29.0
+pyarrow==14.0.2
+pandas==2.2.2
+pyiceberg[s3fs,hive]==0.5.1

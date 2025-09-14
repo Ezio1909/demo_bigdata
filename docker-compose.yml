@@ -152,6 +152,27 @@ services:
     networks:
       - github-events-network
 
+  jupyter:
+    build:
+      context: .
+      dockerfile: services/jupyter-notebook/Dockerfile
+    container_name: jupyter
+    depends_on:
+      api-service:
+        condition: service_started
+    ports:
+      - "8888:8888"
+    environment:
+      - SPARK_MASTER=local[*]
+      - ICEBERG_WAREHOUSE_PATH=/opt/iceberg/warehouse
+    volumes:
+      - .:/workspace
+      - ./iceberg-data:/opt/iceberg
+      - ivy-cache:/opt/ivy
+    restart: unless-stopped
+    networks:
+      - github-events-network
+
 volumes:
   zookeeper-data:
     driver: local
