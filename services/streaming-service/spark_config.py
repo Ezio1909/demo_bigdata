@@ -22,7 +22,7 @@ class SparkConfig:
     
     # Processing Configuration
     CHECKPOINT_LOCATION = os.getenv('CHECKPOINT_LOCATION', '/opt/iceberg/checkpoints')
-    TRIGGER_INTERVAL = os.getenv('TRIGGER_INTERVAL', '1 second')
+    TRIGGER_INTERVAL = os.getenv('TRIGGER_INTERVAL', '2 seconds')
     
     # Data retention (1 hour in milliseconds)
     DATA_RETENTION_MS = 3 * 60 * 60 * 1000

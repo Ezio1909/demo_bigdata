@@ -107,3 +107,51 @@ echo "GITHUB_TOKEN=your_github_token" > .env
 - Check Docker resources: `docker system df`
 - Clean up: `docker system prune -f`
 - Restart: `docker-compose down && ./setup.sh`
+
+### Reset / Fresh Demo
+
+Option A — Minimal reset (keep Kafka messages, resume from latest)
+
+```bash
+# Stop streaming (releases file locks)
+curl -X POST http://localhost:8002/stop || true
+
+# Remove local Iceberg data and checkpoints
+rm -rf ./iceberg-data/warehouse ./iceberg-data/checkpoints
+mkdir -p ./iceberg-data/warehouse ./iceberg-data/checkpoints
+
+# Start streaming again
+curl -X POST http://localhost:8002/start
+```
+
+Option B — Full reset (wipe data and Kafka topic)
+
+```bash
+# Stop streaming
+curl -X POST http://localhost:8002/stop || true
+
+# Remove local Iceberg data
+rm -rf ./iceberg-data/warehouse ./iceberg-data/checkpoints
+mkdir -p ./iceberg-data/warehouse ./iceberg-data/checkpoints
+
+# Drop and recreate Kafka topic (deletes messages)
+docker exec kafka kafka-topics --delete \
+  --topic github-events \
+  --bootstrap-server localhost:9092 || true
+
+docker exec kafka kafka-topics --create \
+  --topic github-events \
+  --bootstrap-server localhost:9092 \
+  --partitions 3 \
+  --replication-factor 1 \
+  --config retention.ms=10800000 \
+  --config segment.ms=3600000 \
+  --config cleanup.policy=delete
+
+# Start streaming
+curl -X POST http://localhost:8002/start
+```
+
+Notes:
+- The repository ignores `./iceberg-data/` so local tables/checkpoints are never committed to Git.
+- If you see orphan containers from older runs, use `docker compose down --remove-orphans` before restarting.

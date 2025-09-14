@@ -78,8 +78,6 @@ derby.log
 # Kafka
 kafka-logs/
 
-# MinIO data
-minio-data/
 
 # Node modules (if any)
 node_modules/
