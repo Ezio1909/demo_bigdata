@@ -10,12 +10,15 @@ RUN apt-get update && apt-get install -y \
     procps \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install Python dependencies
-COPY services/streaming/requirements.txt /tmp/requirements.txt
-RUN python -m pip install --no-cache-dir -r /tmp/requirements.txt
+# Install uv for faster Python package installation
+RUN pip install uv
+
+# Copy requirements and install Python dependencies with uv
+COPY services/streaming-service/requirements.txt /tmp/requirements.txt
+RUN uv pip install --system --no-cache -r /tmp/requirements.txt
 
 # Copy application code
-COPY services/streaming/ .
+COPY services/streaming-service/ .
 
 # Create iceberg directories
 RUN mkdir -p /opt/iceberg/warehouse /opt/iceberg/checkpoints
