@@ -23,8 +23,10 @@ RUN uv pip install --system --no-cache -r requirements.txt
 # Copy application code
 COPY services/api-service/ .
 
-# Create non-root user
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+# Create non-root user and writable ivy cache dir
+RUN useradd -m -u 1000 appuser \
+    && mkdir -p /opt/ivy \
+    && chown -R appuser:appuser /app /opt/ivy
 USER appuser
 
 # Expose port

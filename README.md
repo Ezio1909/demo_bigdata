@@ -29,10 +29,8 @@ That's it! The pipeline will start automatically.
 | 📤 **Producer API** | http://localhost:8001 | Control producer |
 | ⚡ **Streaming API** | http://localhost:8002 | Control streaming |
 | 🔍 **Query API** | http://localhost:8003 | Data access |
-| 🗄️ **MinIO Console** | http://localhost:9001 | Storage management |
 | 📋 **Kafka UI** | http://localhost:8081 | Kafka topics & messages |
 
-**MinIO Credentials:** `minioadmin` / `minioadmin123`
 
 ## Manual Control
 
@@ -91,7 +89,7 @@ echo "GITHUB_TOKEN=your_github_token" > .env
 1. **Producer** fetches GitHub events from public API
 2. **Kafka** streams events in real-time
 3. **Spark Streaming** processes and enriches events
-4. **Iceberg** stores data with ACID transactions
+4. **Iceberg** stores data with ACID transactions (local filesystem)
 5. **API** provides REST endpoints for querying
 6. **Dashboard** visualizes real-time metrics
 
@@ -101,6 +99,9 @@ echo "GITHUB_TOKEN=your_github_token" > .env
 - Check producer: `docker-compose logs producer-service`
 - Check streaming: `docker-compose logs streaming-service`
 - Verify Kafka topic: `docker exec kafka kafka-topics --list --bootstrap-server localhost:9092`
+
+**Long startup due to jar downloads:**
+- The stack uses only two small Maven packages now (Iceberg runtime, Spark Kafka). A local Ivy cache is persisted to avoid re-downloading on restarts.
 
 **Services won't start:**
 - Check Docker resources: `docker system df`

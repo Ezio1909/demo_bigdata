@@ -58,6 +58,9 @@ logs/
 # Data directories
 iceberg/warehouse/
 iceberg/checkpoints/
+# Local filesystem Iceberg data (bind mount)
+iceberg-data/
+iceberg-data/**
 data/
 *.parquet
 *.avro

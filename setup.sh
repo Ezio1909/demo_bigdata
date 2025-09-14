@@ -97,12 +97,9 @@ show_status() {
     echo "📤 Producer API:           http://localhost:8001"
     echo "⚡ Streaming API:          http://localhost:8002"
     echo "🔍 Query API:              http://localhost:8003"
-    echo "🗄️  MinIO Console:         http://localhost:9001"
     echo "📋 Kafka UI:               http://localhost:8081"
     echo "   └─ Topics:              http://localhost:8081/ui/clusters/local/all-topics"
     echo "   └─ GitHub Events:       http://localhost:8081/ui/clusters/local/topics/github-events"
-    echo
-    echo "🔑 MinIO Credentials: minioadmin / minioadmin123"
     echo
     echo "🛠️  Management:"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
